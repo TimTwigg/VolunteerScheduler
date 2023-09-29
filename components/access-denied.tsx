@@ -1,18 +1,11 @@
-import { signIn } from "next-auth/react"
-
 const AccessDenied = () => {
     return (
-        <>
-            <h1>Access Denied</h1>
+        <div className = "card">
+            <h2>Login Required</h2>
             <p>
-                <a href = "api/auth/signin" onClick = {(e) => {
-                    e.preventDefault()
-                    signIn()
-                }}>
-                    You must be signed in to view this page.
-                </a>
+                Please log in with your Google account to use the Volunteer Scheduler.
             </p>
-        </>
+        </div>
     )
 }
 

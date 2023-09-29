@@ -1,24 +1,11 @@
-import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import RootLayout from "components/layout"
 import AccessDenied from "components/access-denied"
 
 const Home = () => {
-    const { data: session } = useSession()
-    const [ content, SetContent ] = useState()
+    const { status } = useSession()
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const res = await fetch("/api/protected")
-            const json = await res.json()
-            if (json.content) {
-                SetContent(json.content)
-            }
-        }
-        fetchData()
-    }, [session])
-
-    if (!session) {
+    if (status != "authenticated") {
         return (
             <RootLayout>
                 <AccessDenied/>
@@ -28,9 +15,9 @@ const Home = () => {
 
     return (
         <RootLayout>
-            <h1>Content</h1>
+            <h3>Schedule Volunteers</h3>
             <p>
-                {content ?? "\u00a0"}
+                Text
             </p>
         </RootLayout>
     )
