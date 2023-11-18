@@ -1,6 +1,8 @@
 import { useSession } from "next-auth/react"
+// import { collection, getDocs } from "firebase/firestore"
 import RootLayout from "components/layout"
 import AccessDenied from "components/access-denied"
+import { handleAddData } from "handlers/firebaseHandlers"
 
 const Home = () => {
     const { status } = useSession()
@@ -19,6 +21,7 @@ const Home = () => {
             <p>
                 Text
             </p>
+            <button onClick = {() => handleAddData()}>Insert data</button>
         </RootLayout>
     )
 }

@@ -1,16 +1,12 @@
 import type { GetServerSidePropsContext, NextApiRequest, NextApiResponse } from "next"
 import type { NextAuthOptions as NextAuthConfig, Session } from "next-auth"
 import { getServerSession } from "next-auth"
-import { JWT } from "next-auth/jwt";
-import GoogleProvider from "next-auth/providers/google";
-
-declare module "next-auth/jwt" {
-    interface JWT {
-        userRole?: "admin"
-    }
-}
+import { JWT } from "next-auth/jwt"
+import GoogleProvider from "next-auth/providers/google"
+import { FirestoreAdapter } from "@next-auth/firebase-adapter"
 
 export const config = {
+    adapter: FirestoreAdapter(),
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_ID!,
@@ -31,12 +27,11 @@ export const config = {
             token.userRole = "admin"
             if (account) {
                 token.accessToken = account.access_token
-                token.refreshToken = account.refresh_token
             }
             return token
         },
-        async session({ session, token }: { session: Session & {token?: string, sheetID?: string}, token: JWT }) {
-            session.token = token.accessToken as string
+        async session({ session, token }: { session: Session, token: JWT }) {
+            session.token = token.accessToken
             session.sheetID = process.env.GOOGLE_SHEET_ID
             return session
         },
