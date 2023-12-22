@@ -1,5 +1,16 @@
+/*
+*  CONTENTS:
+*
+*  - Color Variables
+*  - Grid
+*  - Base Styles
+*  - Nav
+*  - Forms
+*
+*/
+
 /* 
-*   Color Varaibles
+*   Color Variables
 *   ================================================================
 */
 
@@ -16,12 +27,6 @@
 /* 
 *   Grid
 *   ================================================================
-*/
-
-/*
-* Column formatting adapted from:
-* Skeleton V2.0.4
-* www.getskeleton.com
 */
 
 .container {
@@ -131,13 +136,17 @@ body {
     line-height: 1.6;
     font-weight: 400;
     min-height: 100vh;
+    margin: 0;
     display: flex;
     flex-direction: column;
-    margin: 0 auto;
-    padding: 0 1rem 1rem 1rem;
-    max-width: 80%;
     background: #FFFFFF;
     color: #333333;
+}
+
+main {
+    width: 90%;
+    padding: 1rem;
+    margin: 0 auto;
 }
 
 h1, h2, h3, h4, h5 {
@@ -164,7 +173,6 @@ h5 {
     padding-left: 20px;
 }
 
-/* Larger than phablet */
 @media (min-width: 550px) {
     h1 { font-size: 5.0rem; }
     h2 { font-size: 4.2rem; }
@@ -194,23 +202,44 @@ hr {
     border: 1px solid #DDDDDD;
 }
 
-iframe {
-    background: #CCCCCC;
-    border: 1px solid #CCCCCC;
-    height: 10rem;
+/* 
+*   Nav
+*   ================================================================
+*/
+
+nav {
+    background-color: gray;
     width: 100%;
-    border-radius: 0.5rem;
-    filter: invert(1);
+    box-sizing: border-box;
+    margin-left: 0;
+    overflow: hidden;
+
+    h3 {
+        display: inline-block;
+        text-align: center;
+        width: 75%;
+        padding: 0;
+        margin: 10px 0;
+    }
 }
 
-.card {
-    background-color: #D1D1D1;
-    border-radius: 5px;
-    max-width: 50%;
-    margin: 20px auto;
-    padding: 1px;
 
-    p {
-        text-align: center;
-    }
+
+/* 
+*   Forms
+*   ================================================================
+*/
+
+input[type="email"],
+input[type="password"] {
+    height: 38px;
+    padding: 6px 10px;
+    margin: 5px;
+    background-color: white;
+    color: black;
+    font: inherit;
+    border: 1px solid gray;
+    border-radius: 4px;
+    box-shadow: none;
+    box-sizing: border-box;
 }
