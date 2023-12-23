@@ -1,6 +1,6 @@
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged as _onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/controllers/firebase";
-import { addUser } from "@/controllers/firestore";
+// import { addUser } from "@/controllers/firestore";
 
 export function onAuthStateChanged(cb: any) {
     return _onAuthStateChanged(auth, cb);
@@ -12,7 +12,7 @@ export async function signInWithGoogle() {
         let cred = GoogleAuthProvider.credentialFromResult(res);
         let token = cred?.accessToken;
         let user = res.user;
-        await addUser(user.uid, token!);
+        // await addUser(user.uid, token!);
         console.log("success");
         return user;
     }).catch((error) => {

@@ -6,17 +6,17 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "@/controllers/auth";
 
 export function getUser() {
-    const [user, SetUser] = React.useState<User|null>();
+    const [user, SetUser] = React.useState<User|null>(null);
     const router = useRouter();
 
     React.useEffect(() => {
-        const unsubscribe = onAuthStateChanged((authUser: any) => SetUser(authUser));
+        const unsubscribe = onAuthStateChanged((authUser: User|null) => SetUser(authUser));
         return () => unsubscribe();
     }, []);
 
     React.useEffect(() => {
         onAuthStateChanged((authUser: any) => {
-            if (user == undefined) return;
+            if (user == null) return;
             if (user?.email != authUser?.email) {
                 router.refresh();
             }

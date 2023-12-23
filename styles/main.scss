@@ -6,6 +6,7 @@
 *  - Base Styles
 *  - Nav
 *  - Forms
+*  - Utilities
 *
 */
 
@@ -23,6 +24,9 @@
 // $lightBlue: #33C3F0;
 // $red: rgb(155, 20, 20);
 // $lightGold: #C4AB7E;
+$primary: #14312C;
+$secondary: #AB8D59;
+$tertiary: white;
 
 /* 
 *   Grid
@@ -139,7 +143,7 @@ body {
     margin: 0;
     display: flex;
     flex-direction: column;
-    background: #FFFFFF;
+    background: $tertiary;
     color: #333333;
 }
 
@@ -202,13 +206,18 @@ hr {
     border: 1px solid #DDDDDD;
 }
 
+span.quote {
+    background-color: lightgray;
+}
+
 /* 
 *   Nav
 *   ================================================================
 */
 
 nav {
-    background-color: gray;
+    background-color: $primary;
+    color: $secondary;
     width: 100%;
     box-sizing: border-box;
     margin-left: 0;
@@ -231,7 +240,8 @@ nav {
 */
 
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+input[type="text"] {
     height: 38px;
     padding: 6px 10px;
     margin: 5px;
@@ -242,4 +252,53 @@ input[type="password"] {
     border-radius: 4px;
     box-shadow: none;
     box-sizing: border-box;
+}
+
+label {
+    display: inline-block;
+    margin: 5px;
+    padding: 6px 10px;
+}
+
+button {
+    display: inline-block;
+    height: 38px;
+    padding: 0 30px;
+    color: $secondary;
+    background-color: $primary;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 38px;
+    letter-spacing: .1rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: 4px;
+    border: 1px solid $secondary;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* 
+*   Utilities
+*   ================================================================
+*/
+
+.break {
+    width: 100%;
+    overflow: hidden;
+    height: 1px;
+}
+
+.spacer {
+    width: 100%;
+    overflow: hidden;
+    height: 0.5em;
+}
+
+.big.spacer {
+    width: 100%;
+    overflow: hidden;
+    height: 2em;
 }
