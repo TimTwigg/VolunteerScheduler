@@ -6,6 +6,7 @@
 *  - Base Styles
 *  - Nav
 *  - Forms
+*  - Tables
 *  - Utilities
 *
 */
@@ -130,7 +131,7 @@ $tertiary: white;
 
 html {
     font-size: 62.5%;
-    font-family: serif;
+    font-family: Arial, Helvetica, sans-serif;
     -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
 }
@@ -241,7 +242,8 @@ nav {
 
 input[type="email"],
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+select {
     height: 38px;
     padding: 6px 10px;
     margin: 5px;
@@ -279,6 +281,13 @@ button {
     cursor: pointer;
     box-sizing: border-box;
 }
+
+/* 
+*   Tables
+*   ================================================================
+*/
+
+
 
 /* 
 *   Utilities

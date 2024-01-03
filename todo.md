@@ -1,4 +1,3 @@
 # TODO
 
-- set up login page
-- create home page 
+- create and style table

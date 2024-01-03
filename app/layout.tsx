@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import NavBar from "@/components/navbar";
 import { getAuthenticatedAppForUser } from "@/controllers/firebase";
 import "@/styles/main.scss";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "Volunteer Scheduler"
@@ -16,7 +13,7 @@ export default async function RootLayout({ children } : { children: React.ReactN
 
     return (
         <html lang = "en">
-            <body className = {inter.className}>
+            <body>
                 <NavBar initialUser = {currentUser}/>
                 {children}
             </body>

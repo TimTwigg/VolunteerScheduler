@@ -1,6 +1,6 @@
 import { query, collection, getDocs, addDoc, where, setDoc, doc } from "firebase/firestore";
 import { db } from "@/controllers/firebase";
-import VSUser from "@/models/user.ts";
+import VSUser, { Matchings } from "@/models/user.ts";
 
 async function getUserDocRef(uid: string) {
     let d = await getUserDoc(uid);
@@ -21,7 +21,12 @@ export async function getUserData(uid: string) {
     let d = await getUserDoc(uid);
     if (d == null) return null;
     let data = d.data();
-    return new VSUser(uid, data.sheetLink);
+    return new VSUser(uid, data.sheetLink, {
+        NameField: data.NameField,
+        WeekendsServingField: data.WeekendsServingField,
+        ServeTimesField: data.ServeTimesField,
+        ServiceTimeField: data.ServiceTimeField
+    });
 }
 
 export async function addUser(uid: string, token: string) {
@@ -44,11 +49,16 @@ export async function addUser(uid: string, token: string) {
     }
 }
 
-export async function updateLink(uid: string, link: string) {
+export async function updateUserSettings(uid: string, link: string, matchings: Matchings) {
     let docRef = await getUserDocRef(uid);
-    if (docRef != null) {
-        setDoc(docRef, {
-            sheetLink: link
-        }, { merge: true });
+    console.log(docRef);
+    let data = {
+        sheetLink: link,
+        ...matchings
     }
+    if (docRef != null) {
+        setDoc(docRef, data, { merge: true });
+        return true;
+    }
+    return false;
 }
