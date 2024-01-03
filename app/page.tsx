@@ -6,7 +6,7 @@ import { JWT } from "google-auth-library";
 import toast, { Toaster } from "react-hot-toast";
 import { getUser } from "@/controllers/getUser";
 import { getUserData, updateUserSettings } from "@/controllers/firestore";
-import { getIDFromLink } from "@/controllers/utilities";
+import { getIDFromLink, getSundaysForMonth, Months, monthStrings } from "@/controllers/utilities";
 import { processRowData } from "@/controllers/data";
 import Volunteer from "@/models/volunteer";
 import VariableSelect from "@/components/variableSelect";
@@ -24,6 +24,7 @@ export default function LogIn() {
     const serviceTimeRef = React.createRef<HTMLSelectElement>();
     const serveTimesRef = React.createRef<HTMLSelectElement>();
     const [matchingsDefined, SetMatchingsDefined] = React.useState<boolean>(false);
+    const [days, SetDays] = React.useState<string[]>([]);
 
 
     const getVSUser = async () => {
@@ -94,7 +95,12 @@ export default function LogIn() {
                 SetRows(data);
                 SetVolunteers(processRowData(data, u!.matchings));
             });
+            fillTable(monthStrings[new Date().getMonth()]);
         }
+    }
+
+    const fillTable = (month: string) => {
+        SetDays(getSundaysForMonth(month));
     }
 
     if (currentUser === undefined || currentUser === null) {
@@ -123,15 +129,22 @@ export default function LogIn() {
                             Field name matchings are required. Please visit the Settings tab to define the matchings.
                         </p>
                     }
-                    {matchingsDefined &&
-                        <table>
+                    {matchingsDefined && <>
+                        <select id = "monthSelector" className = "four columns offset-by-one column" defaultValue = {monthStrings[new Date().getMonth()]} onChange = {(ev) => {fillTable(ev.target.value)}}>
+                            {
+                                monthStrings.map((m, i) => <option key = {i} value = {m}>{m}</option>)
+                            }
+                        </select>
+                        <table className = "twelve columns">
                             <thead>
                                 <tr>
-                                    {/* TODO */}
+                                    {
+                                        days.map((d, i) => <th key = {i}>{d}</th>)
+                                    }
                                 </tr>
                             </thead>
                         </table>
-                    }
+                    </>}
                 </TabPanel>
                 <TabPanel className = "container">
                     <h4>Settings</h4>

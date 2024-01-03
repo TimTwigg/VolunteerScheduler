@@ -10,7 +10,7 @@ export function processRowData(data: GoogleSpreadsheetRow<Record<string, any>>[]
             row.get(fieldNames.NameField!),
             parseInt(row.get(fieldNames.ServeTimesField!)),
             row.get(fieldNames.ServiceTimeField!),
-            (row.get(fieldNames.WeekendsServingField!) as string).split(",")
+            (row.get(fieldNames.WeekendsServingField!) as string).split(",").map((d, _) => new Date(d).toLocaleDateString("en-US", {day: "2-digit", month: "long", year: "numeric"}))
         ));
     });
 
