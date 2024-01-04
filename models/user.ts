@@ -2,7 +2,9 @@ export type Matchings = {
     NameField: string|null,
     WeekendsServingField: string|null,
     ServiceTimeField: string|null,
-    ServeTimesField: string|null
+    ServeTimesField: string|null,
+    TeamsField: string|null,
+    NotesField: string|null
 }
 
 export default class VSUser {

@@ -25,7 +25,9 @@ export async function getUserData(uid: string) {
         NameField: data.NameField,
         WeekendsServingField: data.WeekendsServingField,
         ServeTimesField: data.ServeTimesField,
-        ServiceTimeField: data.ServiceTimeField
+        ServiceTimeField: data.ServiceTimeField,
+        TeamsField: data.TeamsField,
+        NotesField: data.NotesField
     });
 }
 
