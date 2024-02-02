@@ -5,13 +5,14 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import toast, { Toaster } from "react-hot-toast";
 import { getUser } from "@/controllers/getUser";
-import { getUserData, updateUserSettings } from "@/controllers/firestore";
-import { getIDFromLink, getSundaysForMonth, Months, monthStrings } from "@/controllers/utilities";
+import { getUserData, updateUserSettings, saveSchedule, loadSchedule } from "@/controllers/firestore";
+import { getIDFromLink, getSundaysForMonth, monthStrings } from "@/controllers/utilities";
 import { processRowData } from "@/controllers/data";
 import Volunteer from "@/models/volunteer";
 import VariableSelect from "@/components/variableSelect";
 import VolunteerSelect from "@/components/volunteerSelect";
 import "react-tabs/style/react-tabs.css";
+import { Schedule } from "@/models/schedule";
 
 export default function Home() {
     const currentUser = getUser();
@@ -33,6 +34,7 @@ export default function Home() {
     const forceUpdate = React.useCallback(() => updateState({}), []);
     const [month, SetMonth] = React.useState<string>(monthStrings[new Date().getMonth()]);
     const [vNotes, SetVNotes] = React.useState<[string, string][]>([]);
+    const [schedule, SetSchedule] = React.useState<Schedule|undefined>();
 
     const getVSUser = async () => {
         if (!(currentUser === undefined || currentUser === null)) {
@@ -111,6 +113,9 @@ export default function Home() {
                 SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
             });
             fillTable(monthStrings[new Date().getMonth()]);
+            let s = await loadSchedule(currentUser!.uid);
+            if (s) SetSchedule(s);
+            else SetSchedule(new Schedule(["Check-In Team 9am", "Elementary 9am", "Check-In Team 11am", "Elementary 11am", "Rise 11am"], getSundaysForMonth(month)));
         }
     }
 
@@ -119,6 +124,8 @@ export default function Home() {
         SetMonth(month);
         SetTabIndex(2);
         setTimeout(() => SetTabIndex(0), 1);
+        let noteVolunteers = volunteers[monthStrings.indexOf(month)]?.filter(v => v.notes);
+        if (noteVolunteers) SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
     }
 
     const handleTabChange = (index: number): boolean => {
@@ -142,9 +149,16 @@ export default function Home() {
 
     const scheduleVolunteers = (name: string, day: string, time: string, team: string) => {
         let oldV = volunteers[monthStrings.indexOf(month)].filter(v => v.name == prev);
-        if (oldV.length > 0) oldV[0].unschedule(day, time, team);
+        if (oldV.length > 0) {
+            oldV[0].unschedule(day, time, team);
+            schedule!.unscheduleVolunteer(`${team} ${time}`, day, oldV[0].name);
+        }
         let newV = volunteers[monthStrings.indexOf(month)].filter(v => v.name == name);
-        if (newV.length > 0) newV[0].schedule(day, time, team);
+        if (newV.length > 0) {
+            newV[0].schedule(day, time, team);
+            schedule!.scheduleVolunteer(`${team} ${time}`, day, name);
+        }
+        saveSchedule(currentUser.uid, schedule!);
     }
 
     return (
@@ -217,7 +231,7 @@ export default function Home() {
 
                             <div className = "big spacer"/>
                             <p>
-                                {vNotes.map(pair => `${pair[0]}: ${pair[1]}\n`)} <br/>
+                                {vNotes.map(pair => `${pair[0]}: ${pair[1]}\n`)}
                             </p>
                     
                     </>}

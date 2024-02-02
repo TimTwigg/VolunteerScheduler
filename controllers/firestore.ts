@@ -1,6 +1,7 @@
-import { query, collection, getDocs, addDoc, where, setDoc, doc } from "firebase/firestore";
+import { query, collection, getDocs, addDoc, where, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/controllers/firebase";
-import VSUser, { Matchings } from "@/models/user.ts";
+import VSUser, { Matchings } from "@/models/user";
+import { Schedule, scheduleConverter } from "@/models/schedule";
 
 async function getUserDocRef(uid: string) {
     let d = await getUserDoc(uid);
@@ -17,7 +18,7 @@ async function getUserDoc(uid: string) {
     return res.docs[0];
 }
 
-export async function getUserData(uid: string) {
+export async function getUserData(uid: string): Promise<VSUser|null> {
     let d = await getUserDoc(uid);
     if (d == null) return null;
     let data = d.data();
@@ -51,9 +52,8 @@ export async function addUser(uid: string, token: string) {
     }
 }
 
-export async function updateUserSettings(uid: string, link: string, matchings: Matchings) {
+export async function updateUserSettings(uid: string, link: string, matchings: Matchings): Promise<boolean> {
     let docRef = await getUserDocRef(uid);
-    console.log(docRef);
     let data = {
         sheetLink: link,
         ...matchings
@@ -63,4 +63,18 @@ export async function updateUserSettings(uid: string, link: string, matchings: M
         return true;
     }
     return false;
+}
+
+export async function saveSchedule(uid: string, schedule: Schedule) {
+    let docRef = await getUserDocRef(uid).then(ref => ref?.withConverter(scheduleConverter));
+    if (docRef== null) return;
+    setDoc(docRef, schedule, { merge: true });
+}
+
+export async function loadSchedule(uid: string): Promise<Schedule|null> {
+    let docRef = await getUserDocRef(uid).then(ref => ref?.withConverter(scheduleConverter));
+    if (docRef == null) return null;
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) return docSnap.data();
+    return null;
 }
