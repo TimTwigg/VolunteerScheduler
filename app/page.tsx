@@ -88,6 +88,24 @@ export default function Home() {
         else toast.error("Failed to update settings.")
     }
 
+    const mergeScheduleWithVolunteers = (v: Volunteer[][], s: Schedule) => {
+        let vols = v[s.month];
+        let all = s.getAllScheduled();
+        for (let i = 0; i < all.length; ++i) {
+            let entry = all[i];
+            let name = entry[0];
+            let date = entry[1];
+            let pieces = entry[2].split(" ");
+            let team = pieces[0];
+            let time = pieces[1];
+            for (const v of vols) {
+                if (v.name == name) {
+                    v.schedule(date, time, team);
+                }
+            }
+        }
+    }
+
     const loadSheet = async () => {
         await getVSUser();
         if (sheetLink != "" && !loaded) {
@@ -106,16 +124,19 @@ export default function Home() {
             const sheet = doc.sheetsByIndex[0];
             await sheet.loadHeaderRow();
             SetHeaders(sheet.headerValues);
+
+            let s = await loadSchedule(currentUser!.uid);
+            if (s == null) s = new Schedule(["Check-In Team 9am", "Elementary 9am", "Check-In Team 11am", "Elementary 11am", "Rise 11am"], getSundaysForMonth(month), month);
+            SetSchedule(s);
+
             sheet.getRows({ limit: sheet.rowCount }).then((data) => {
                 let vs = processRowData(data, u!.matchings);
+                mergeScheduleWithVolunteers(vs, s!);
                 SetVolunteers(vs);
                 let noteVolunteers = vs[monthStrings.indexOf(month)].filter(v => v.notes);
                 SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
             });
             fillTable(monthStrings[new Date().getMonth()]);
-            let s = await loadSchedule(currentUser!.uid);
-            if (s) SetSchedule(s);
-            else SetSchedule(new Schedule(["Check-In Team 9am", "Elementary 9am", "Check-In Team 11am", "Elementary 11am", "Rise 11am"], getSundaysForMonth(month)));
         }
     }
 
@@ -147,7 +168,8 @@ export default function Home() {
 
     loadSheet();
 
-    const scheduleVolunteers = (name: string, day: string, time: string, team: string) => {
+    const scheduleVolunteers = async (name: string, day: string, time: string, team: string) => {
+        console.log(name, prev);
         let oldV = volunteers[monthStrings.indexOf(month)].filter(v => v.name == prev);
         if (oldV.length > 0) {
             oldV[0].unschedule(day, time, team);
@@ -158,7 +180,7 @@ export default function Home() {
             newV[0].schedule(day, time, team);
             schedule!.scheduleVolunteer(`${team} ${time}`, day, name);
         }
-        saveSchedule(currentUser.uid, schedule!);
+        await saveSchedule(currentUser.uid, schedule!);
     }
 
     return (

@@ -21,7 +21,7 @@ export default function VolunteerSelect({ volunteers, day, team, time, month, cl
         defValue = selectedVol[0].name
     }
     return (
-        <select defaultValue = {defValue} className = {"volunteerSelect " + className} onChange = {ev => {onChange(ev.target.value)}} onFocus = {ev => {onFocus(ev.target.value)}}>
+        <select defaultValue = {defValue} className = {"volunteerSelect " + className} onChange = {ev => {onChange(ev.target.value)}} onFocus = {ev => {onFocus(ev.target.value),ev.target.blur()}}>
             <option value = "None">None</option>
             {
                 volunteers[monthStrings.indexOf(month)].filter((v) => v.willServe(team, day, time)).map((v, i) => <option key = {i} value = {v.name} disabled = {!v.couldServe(day, time)}>{v.name}</option>)

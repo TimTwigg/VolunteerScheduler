@@ -1,11 +1,9 @@
 # TODO
 
-- state management
-    - save volunteer array to firebase? and then load again?
-        - mostly achieved, getting an error when trying to store data
 - add multiple drop-downs for each day/time/team cell.
 - add the ability to manually add names
 - export button to download as csv/pdf/something
+- change firestore setDoc to use runTransaction?
 
 ## Questions for Client
 
