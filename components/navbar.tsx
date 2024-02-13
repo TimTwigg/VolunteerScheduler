@@ -3,10 +3,12 @@ import React from "react";
 import { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { signInWithGoogle, signOut, onAuthStateChanged } from "@/controllers/auth";
+import { getUserOrgName } from "@/controllers/firestore";
 
 export default function NavBar({ initialUser }: {initialUser: User|null}) {
     const [user, SetUser] = React.useState<User|null>(initialUser);
     const router = useRouter();
+    const [orgName, SetOrgName] = React.useState<String>("Volunteer Scheduler");
 
     React.useEffect(() => {
         const unsubscribe = onAuthStateChanged((authUser: any) => SetUser(authUser));
@@ -19,6 +21,7 @@ export default function NavBar({ initialUser }: {initialUser: User|null}) {
             if (user?.email != authUser?.email) {
                 router.refresh();
             }
+            if (user) getUserOrgName(user.uid).then(name => SetOrgName(name||"Volunteer Scheduler")).catch(() => {});
         });
     }, [user, router]);
 
@@ -29,29 +32,21 @@ export default function NavBar({ initialUser }: {initialUser: User|null}) {
     const handleSignout = (event: any) => {
         event.preventDefault();
         signOut();
+        SetOrgName("Volunteer Scheduler");
     }
 
     return (
         <nav>
-            <h3>Volunteer Scheduler</h3>
-            <p>
-                {!user && (<>
-                    <span className = "notSignedInText">
-                        You are not signed in
-                    </span>
-                    <a href = "/api/auth/signin" onClick = {handleSignIn}>
-                        Sign In
-                    </a>
-                </>)}
-                {user && (<>
-                    <span className = "signedInText">
-                        Signed in as {user.displayName}
-                    </span> 
-                    <a href = "/api/auth/signout" onClick = {handleSignout}>
-                        Sign out
-                    </a>
-                </>)}
-            </p>
+            <h3 className = "eight columns">{orgName}</h3>
+            {!user && <a className = "loginButton" href = "/api/auth/signin" onClick = {handleSignIn}>Sign In</a>}
+            {user && (<>
+                <div className = "dropdown">
+                    <button className = "dropbtn">{user.displayName}</button>
+                    <div className = "dropdown-content">
+                        <a href = "/api/auth/signout" onClick = {handleSignout}>Sign Out</a>
+                    </div>
+                </div>
+            </>)}
         </nav>
     );
 }

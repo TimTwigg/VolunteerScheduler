@@ -7,7 +7,6 @@ export const metadata: Metadata = {
     title: "Volunteer Scheduler"
 }
 
-// eslint-disable-next-line @next/next/no-async-client-component
 export default async function RootLayout({ children } : { children: React.ReactNode }) {
     const { currentUser } = await getAuthenticatedAppForUser();
 

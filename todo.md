@@ -2,12 +2,6 @@
 
 - change firestore setDoc to use runTransaction?
 
-## Questions for Client
-
-- What should be the default behavior for a volunteer who has not yet submitted the form for the new month?
-- For "serve x times per month", does this mean x days, or x times? As in, would scheduling someone for both 9am and 11am services count as 2 that month already, or just 1?
-    - Currently assuming it would be 2.
-
 ## Future Development
 
 - Draw team rows from Team options, which should be specified in the settings

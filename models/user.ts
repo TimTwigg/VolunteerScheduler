@@ -9,11 +9,13 @@ export type Matchings = {
 
 export default class VSUser {
     uid: string;
+    orgName: string;
     sheetLink: string;
     matchings: Matchings
 
-    constructor(uid: string, sheetLink: string, matchings: Matchings) {
+    constructor(uid: string, orgName: string, sheetLink: string, matchings: Matchings) {
         this.uid = uid;
+        this.orgName = orgName;
         this.sheetLink = sheetLink;
         this.matchings = matchings;
     }

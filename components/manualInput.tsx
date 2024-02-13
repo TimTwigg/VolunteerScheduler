@@ -21,7 +21,7 @@ function ManualName({ name, onClick } : ManualNameProps) {
     return (
         <span className = "twelve columns manualName">
             <span className = "eight columns">{name}</span>
-            <button className = "two columns offset-by-two columns" onClick = {() => onClick(name)}>X</button>
+            <button className = "two columns offset-by-two columns plain" onClick = {() => onClick(name)}>X</button>
         </span>
     );
 }

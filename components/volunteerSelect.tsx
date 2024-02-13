@@ -16,14 +16,14 @@ type VolunteerSelectProps = {
 export default function VolunteerSelect({ volunteers, day, team, time, id, month, className, onChange, onFocus } : VolunteerSelectProps) {
     if (volunteers.length < 1) return null;
 
-    var defValue: string = "None";
+    var defValue: string = "-";
     let selectedVol = volunteers[monthStrings.indexOf(month)].filter(v => v.isScheduled(day, time, team));
     if (selectedVol.length > id) {
         defValue = selectedVol[id].name
     }
     return (
         <select defaultValue = {defValue} className = {"volunteerSelect " + className} onChange = {ev => {onChange(ev.target.value)}} onFocus = {ev => {onFocus(ev.target.value),ev.target.blur()}}>
-            <option value = "None">None</option>
+            <option value = "-">-</option>
             {
                 volunteers[monthStrings.indexOf(month)].filter((v) => v.willServe(team, day, time)).map((v, i) => <option key = {i} value = {v.name} disabled = {!v.couldServe(day, time)}>{v.name}</option>)
             }

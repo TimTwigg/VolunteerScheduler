@@ -22,7 +22,7 @@ export async function getUserData(uid: string): Promise<VSUser|null> {
     let d = await getUserDoc(uid);
     if (d == null) return null;
     let data = d.data();
-    return new VSUser(uid, data.sheetLink, {
+    return new VSUser(uid, data.orgName, data.sheetLink, {
         NameField: data.NameField,
         WeekendsServingField: data.WeekendsServingField,
         ServeTimesField: data.ServeTimesField,
@@ -30,6 +30,13 @@ export async function getUserData(uid: string): Promise<VSUser|null> {
         TeamsField: data.TeamsField,
         NotesField: data.NotesField
     });
+}
+
+export async function getUserOrgName(uid: string): Promise<string|null> {
+    let d = await getUserDoc(uid);
+    if (d == null) return null;
+    let data = d.data();
+    return data.orgName;
 }
 
 export async function addUser(uid: string, token: string) {
@@ -52,9 +59,10 @@ export async function addUser(uid: string, token: string) {
     }
 }
 
-export async function updateUserSettings(uid: string, link: string, matchings: Matchings): Promise<boolean> {
+export async function updateUserSettings(uid: string, orgName: string, link: string, matchings: Matchings): Promise<boolean> {
     let docRef = await getUserDocRef(uid);
     let data = {
+        orgName: orgName,
         sheetLink: link,
         ...matchings
     }

@@ -1,9 +1,12 @@
 "use client";
+
 import React from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import toast, { Toaster } from "react-hot-toast";
+import "react-tabs/style/react-tabs.css";
+
 import { getUser } from "@/controllers/getUser";
 import { getUserData, updateUserSettings, saveSchedule, loadSchedule, saveManualAssignments, loadManualAssignments } from "@/controllers/firestore";
 import { getIDFromLink, getSundaysForMonth, monthStrings } from "@/controllers/utilities";
@@ -11,7 +14,6 @@ import { processRowData } from "@/controllers/data";
 import Volunteer from "@/models/volunteer";
 import VariableSelect from "@/components/variableSelect";
 import VolunteerSelect from "@/components/volunteerSelect";
-import "react-tabs/style/react-tabs.css";
 import { Schedule } from "@/models/schedule";
 import ManualInput from "@/components/manualInput";
 import ViewBar from "@/components/viewBar";
@@ -20,6 +22,7 @@ export default function Home() {
     const currentUser = getUser();
     const [tabIndex, SetTabIndex] = React.useState<number>(0);
     const [loaded, SetLoaded] = React.useState<boolean>(false);
+    const [orgName, SetOrgName] = React.useState<string>("Volunteer Scheduler");
     const [sheetLink, SetSheetLink] = React.useState<string>("");
     const [headers, SetHeaders] = React.useState<string[]>([]);
     const [volunteers, SetVolunteers] = React.useState<Volunteer[][]>([]);
@@ -45,6 +48,7 @@ export default function Home() {
             
             // set setting options to saved values
             if (u) {
+                SetOrgName(u.orgName);
                 SetSheetLink(u.sheetLink);
 
                 let nameIndex = headers.indexOf(u.matchings.NameField||"");
@@ -71,6 +75,7 @@ export default function Home() {
     }
 
     const updateSettings = async () => {
+        let orgNameBox = document.getElementById("orgName") as HTMLInputElement;
         let linkBox = document.getElementById("sheetLink") as HTMLInputElement;
         let name = nameRef.current!.options[nameRef.current!.selectedIndex].text;
         let weekends = weekendsServingRef.current!.options[weekendsServingRef.current!.selectedIndex].text;
@@ -87,7 +92,7 @@ export default function Home() {
             NotesField: notes
         }
         let uid = currentUser!.uid;
-        if (await updateUserSettings(uid, linkBox.value, matchings)) toast.success("Updated Settings!");
+        if (await updateUserSettings(uid, orgNameBox.value, linkBox.value, matchings)) toast.success("Updated Settings!");
         else toast.error("Failed to update settings.")
     }
 
@@ -262,7 +267,7 @@ export default function Home() {
                                 <tr>
                                     <th></th>
                                     {
-                                        days.map((d, i) => <th key = {i}>{d}</th>)
+                                        days.map((d, i) => <th key = {i}>{d.split(",")[0]}</th>)
                                     }
                                 </tr>
                             </thead>
@@ -347,12 +352,12 @@ export default function Home() {
                                 monthStrings.map((m, i) => <option key = {i} value = {m}>{m}</option>)
                             }
                         </select>
-                        <table className = "ten columns offset-by-one column">
+                        <table className = "twelve columns borders">
                             <thead>
                                 <tr>
                                     <th></th>
                                     {
-                                        days.map((d, i) => <th key = {i}>{d}</th>)
+                                        days.map((d, i) => <th key = {i}>{d.split(",")[0]}</th>)
                                     }
                                 </tr>
                             </thead>
@@ -403,6 +408,14 @@ export default function Home() {
                         Use this page to configure your scheduler. Once defined, these settings should not need to be changed. <br/>
                         <u>Note:</u> When updating settings, all settings must be defined. The Update button will set the scheduler to work with the options defined at the time you click the button.
                     </p>
+
+                    <h5>Organization</h5>
+                    <p>
+                        Your organization name.
+                    </p>
+                    <label htmlFor = "orgName" className = "two columns offset-by-one column">Organization</label>
+                    <input type = "text" id = "orgName" name = "orgName" className = "nine columns" defaultValue = {orgName} onChange = {e => SetOrgName(e.target.value)}/>
+                    <div className = "big spacer"/>
 
                     <h5>Google Sheet Share Link</h5>
                     <p>
