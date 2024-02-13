@@ -6,19 +6,20 @@ type VolunteerSelectProps = {
     day: string,
     team: string,
     time: string,
+    id: number,
     month: string,
     className?: string,
     onChange: (name: string) => void,
     onFocus: (name: string) => void
 }
 
-export default function VolunteerSelect({ volunteers, day, team, time, month, className, onChange, onFocus } : VolunteerSelectProps) {
+export default function VolunteerSelect({ volunteers, day, team, time, id, month, className, onChange, onFocus } : VolunteerSelectProps) {
     if (volunteers.length < 1) return null;
 
     var defValue: string = "None";
     let selectedVol = volunteers[monthStrings.indexOf(month)].filter(v => v.isScheduled(day, time, team));
-    if (selectedVol.length > 0) {
-        defValue = selectedVol[0].name
+    if (selectedVol.length > id) {
+        defValue = selectedVol[id].name
     }
     return (
         <select defaultValue = {defValue} className = {"volunteerSelect " + className} onChange = {ev => {onChange(ev.target.value)}} onFocus = {ev => {onFocus(ev.target.value),ev.target.blur()}}>

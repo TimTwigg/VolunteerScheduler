@@ -21,13 +21,13 @@
 // $cream: #C7B9B9;
 // $gold: #AB8D59;
 // $gray: #555555;
-// $lightGray: #D1D1D1;
 // $lightBlue: #33C3F0;
 // $red: rgb(155, 20, 20);
 // $lightGold: #C4AB7E;
 $primary: #14312C;
 $secondary: #AB8D59;
 $tertiary: white;
+$lightGray: #D1D1D1;
 
 /* 
 *   Grid
@@ -37,7 +37,7 @@ $tertiary: white;
 .container {
     position: relative;
     width: 100%;
-    max-width: 960px;
+    // max-width: 960px;
     margin: 0 auto;
     padding: 0 20px;
     box-sizing: border-box;
@@ -54,7 +54,7 @@ $tertiary: white;
 /* For devices larger than 400px */
 @media (min-width: 400px) {
     .container {
-        width: 85%;
+        width: 95%;
         padding: 0;
     }
 }
@@ -62,7 +62,7 @@ $tertiary: white;
 /* For devices larger than 550px */
 @media (min-width: 550px) {
     .container {
-        width: 80%;
+        width: 90%;
     }
     .column,
     .columns {
@@ -149,7 +149,7 @@ body {
 }
 
 main {
-    width: 90%;
+    width: 95%;
     padding: 1rem;
     margin: 0 auto;
 }
@@ -284,6 +284,36 @@ button {
 
 select.volunteerSelect {
     width: 100%;
+}
+
+.manualInput {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+
+    button {
+        padding: 10px;
+        height: fit-content;
+        line-height: normal;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
+}
+
+.manualName {
+    background-color: $lightGray;
+    padding-left: 2rem;
+    display: flex;
+    align-items: center;
+
+    button {
+        padding: 5px;
+        height: fit-content;
+        line-height: normal;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
 }
 
 /* 

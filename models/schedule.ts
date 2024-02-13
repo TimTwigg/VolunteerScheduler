@@ -1,4 +1,4 @@
-import { monthStrings } from "@/controllers/utilities";
+import { monthStrings, getSundaysForMonth } from "@/controllers/utilities";
 
 class Team {
     days: Map<string, string[]>;
@@ -76,21 +76,41 @@ export class Schedule {
         });
         return scheduled;
     }
+
+    getNamesForDate(date: string, team: string) {
+        return this.schedule[this.teams.indexOf(team)].days.get(date)||[];
+    }
+
+    export(): string[][] {
+        let data: string[][] = [];
+        let days = getSundaysForMonth(monthStrings[this.month]);
+        data.push(["Team", ...days.map(s => s.replace(",", ""))]);
+        this.schedule.forEach(t => {
+            let sections = [];
+            for (const d of days) {
+                let names = t.days.get(d);
+                sections.push(names!.join(" | "));
+            }
+            data.push([t.teamName, ...sections]);
+        });
+        return data;
+    }
 }
 
 export const scheduleConverter = {
-    toFirestore: (schedule: Schedule) => {
+    toFirestore: (schedules: Schedule[]) => {
         return {
-            schedule: {
-                teams: schedule.teams,
-                schedule: schedule.schedule.map(t => {return {days: Object.fromEntries(t.days), teamName: t.teamName}}),
-                month: schedule.month
-            }
+            schedule: schedules.map(s => {return {
+                    teams: s.teams,
+                    schedule: s.schedule.map(t => {return {days: Object.fromEntries(t.days), teamName: t.teamName}}),
+                    month: s.month
+                }
+            })
         }
     },
-    fromFirestore: (snapshot: any, options: any) => {
+    fromFirestore: (snapshot: any, options: any): Schedule[] => {
         const data = snapshot.data(options);
-        if (data.schedule) return Schedule.fromStore(data.schedule.schedule, data.schedule.teams, data.schedule.month);
-        return null;
+        if (data.schedule) return Array.from(data.schedule).map((s:any) => Schedule.fromStore(s.schedule, s.teams, s.month));
+        return [];
     }
 }

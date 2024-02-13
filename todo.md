@@ -1,8 +1,5 @@
 # TODO
 
-- add multiple drop-downs for each day/time/team cell.
-- add the ability to manually add names
-- export button to download as csv/pdf/something
 - change firestore setDoc to use runTransaction?
 
 ## Questions for Client

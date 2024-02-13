@@ -65,16 +65,31 @@ export async function updateUserSettings(uid: string, link: string, matchings: M
     return false;
 }
 
-export async function saveSchedule(uid: string, schedule: Schedule) {
+export async function saveSchedule(uid: string, schedules: Schedule[]) {
     let docRef = await getUserDocRef(uid).then(ref => ref?.withConverter(scheduleConverter));
     if (docRef== null) return;
-    setDoc(docRef, schedule, { merge: true });
+    setDoc(docRef, schedules, { merge: true });
 }
 
-export async function loadSchedule(uid: string): Promise<Schedule|null> {
+export async function loadSchedule(uid: string): Promise<Schedule[]> {
     let docRef = await getUserDocRef(uid).then(ref => ref?.withConverter(scheduleConverter));
-    if (docRef == null) return null;
+    if (docRef == null) return [];
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) return docSnap.data();
-    return null;
+    return [];
+}
+
+export async function saveManualAssignments(uid: string, assignments: string[]) {
+    let docRef = await getUserDocRef(uid);
+    if (docRef== null) return;
+    setDoc(docRef, { manualAssignments: assignments }, { merge: true })
+}
+
+export async function loadManualAssignments(uid: string): Promise<string[]> {
+    let d = await getUserDoc(uid);
+    if (d == null) return [];
+    let data = d.data();
+    let manAssigns = data.manualAssignments;
+    if (manAssigns) return manAssigns;
+    return [];
 }
