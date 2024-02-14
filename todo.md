@@ -1,5 +1,7 @@
 # TODO
 
+- Debug other account use.
+
 - change firestore setDoc to use runTransaction?
 
 ## Future Development

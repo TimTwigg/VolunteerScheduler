@@ -23,12 +23,12 @@ export async function getUserData(uid: string): Promise<VSUser|null> {
     if (d == null) return null;
     let data = d.data();
     return new VSUser(uid, data.orgName, data.sheetLink, {
-        NameField: data.NameField,
-        WeekendsServingField: data.WeekendsServingField,
-        ServeTimesField: data.ServeTimesField,
-        ServiceTimeField: data.ServiceTimeField,
-        TeamsField: data.TeamsField,
-        NotesField: data.NotesField
+        NameField: data.NameField||"",
+        WeekendsServingField: data.WeekendsServingField||"",
+        ServeTimesField: data.ServeTimesField||"",
+        ServiceTimeField: data.ServiceTimeField||"",
+        TeamsField: data.TeamsField||"",
+        NotesField: data.NotesField||""
     });
 }
 

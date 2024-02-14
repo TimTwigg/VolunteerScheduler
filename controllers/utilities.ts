@@ -1,4 +1,5 @@
-export function getIDFromLink(link: string): string {
+export function getIDFromLink(link: string|undefined): string {
+    if (!link) return "";
     let pieces = link.split("/");
     if (pieces.length < 6) return "";
     return pieces[5];

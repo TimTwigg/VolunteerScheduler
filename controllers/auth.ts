@@ -12,7 +12,7 @@ export async function signInWithGoogle() {
         let cred = GoogleAuthProvider.credentialFromResult(res);
         let token = cred?.accessToken;
         let user = res.user;
-        await addUser(user.uid, token!);
+        await addUser(user.email!, token!);
         return user;
     }).catch((error) => {
         const errorCode = error.code;

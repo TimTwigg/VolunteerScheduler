@@ -17,9 +17,11 @@ import VolunteerSelect from "@/components/volunteerSelect";
 import { Schedule } from "@/models/schedule";
 import ManualInput from "@/components/manualInput";
 import ViewBar from "@/components/viewBar";
+import VSUser from "@/models/user";
 
 export default function Home() {
     const currentUser = getUser();
+    const [currentVSUser, SetCurrentVSUser] = React.useState<VSUser|null>(null);
     const [tabIndex, SetTabIndex] = React.useState<number>(0);
     const [loaded, SetLoaded] = React.useState<boolean>(false);
     const [orgName, SetOrgName] = React.useState<string>("Volunteer Scheduler");
@@ -42,15 +44,16 @@ export default function Home() {
     const [schedules, SetSchedules] = React.useState<Schedule[]>([]);
     const [manualAssignments, SetManualAssignments] = React.useState<string[]>([]);
 
-    const getVSUser = async () => {
+    const getVSUser = React.useCallback(async () => {
         if (!(currentUser === undefined || currentUser === null)) {
-            let u = await getUserData(currentUser.uid);
+            SetMatchingsDefined(false);
+            let u = await getUserData(currentUser.email!);
             
             // set setting options to saved values
-            if (u) {
+            if (u && u.matchings.NameField) {
+                SetCurrentVSUser(u);
                 SetOrgName(u.orgName);
                 SetSheetLink(u.sheetLink);
-
                 let nameIndex = headers.indexOf(u.matchings.NameField||"");
                 let weekendsIndex = headers.indexOf(u.matchings.WeekendsServingField||"");
                 let serviceTimeIndex = headers.indexOf(u.matchings.ServiceTimeField||"");
@@ -71,8 +74,11 @@ export default function Home() {
                     SetMatchingsDefined(true);
                 }
             }
+            else if (u && !u.matchings.NameField) {
+
+            }
         }
-    }
+    }, [currentUser, headers, nameRef, notesRef, serveTimesRef, serviceTimeRef, teamsRef, weekendsServingRef])
 
     const updateSettings = async () => {
         let orgNameBox = document.getElementById("orgName") as HTMLInputElement;
@@ -91,8 +97,7 @@ export default function Home() {
             TeamsField: teams,
             NotesField: notes
         }
-        let uid = currentUser!.uid;
-        if (await updateUserSettings(uid, orgNameBox.value, linkBox.value, matchings)) toast.success("Updated Settings!");
+        if (await updateUserSettings(currentVSUser!.uid, orgNameBox.value, linkBox.value, matchings)) toast.success("Updated Settings!");
         else toast.error("Failed to update settings.")
     }
 
@@ -114,10 +119,42 @@ export default function Home() {
         }
     }
 
-    const loadSheet = async () => {
+    const fillTable = React.useCallback((month: string, tab: number) => {
+        SetDays(getSundaysForMonth(month));
+        SetMonth(month);
+        SetTabIndex(3);
+        setTimeout(() => SetTabIndex(tab), 1);
+        let noteVolunteers = volunteers[monthStrings.indexOf(month)]?.filter(v => v.notes);
+        if (noteVolunteers) SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
+    }, [volunteers]);
+
+    const handleTabChange = (index: number): boolean => {
+        if (index == 2) getVSUser();
+        SetTabIndex(index);
+        return true;
+    }
+
+    // assignment is [month, date, team, name]
+    const handleAddManualAssignment = (assignment: [string, string, string, string, string]) => {
+        let temp = manualAssignments;
+        temp.push(assignment.join());
+        SetManualAssignments(temp);
+        saveManualAssignments(currentVSUser!.uid, manualAssignments);
+    }
+
+    // assignment is [month, date, team, name]
+    const handleRemoveManualAssignment = (assignment: [string, string, string, string, string]) => {
+        let temp = manualAssignments;
+        temp.splice(temp.indexOf(assignment.join()), 1);
+        SetManualAssignments(temp);
+        saveManualAssignments(currentVSUser!.uid, manualAssignments);
+    }
+
+    const loadSheet = React.useCallback(async () => {
+        if (loaded && matchingsDefined) return;
         await getVSUser();
-        if (sheetLink != "" && !loaded) {
-            let u = await getUserData(currentUser!.uid);
+        if (sheetLink && sheetLink != "" && !loaded) {
+            let u = await getUserData(currentVSUser!.uid);
             SetLoaded(true);
             let id = getIDFromLink(sheetLink);
             const doc = new GoogleSpreadsheet(id, new JWT({
@@ -133,7 +170,7 @@ export default function Home() {
             await sheet.loadHeaderRow();
             SetHeaders(sheet.headerValues);
 
-            let s = await loadSchedule(currentUser!.uid);
+            let s = await loadSchedule(currentVSUser!.uid);
             let nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
             if (s.length < 12) {
                 for (let sch of s) {
@@ -147,7 +184,7 @@ export default function Home() {
             s.sort((a, b) => a.month - b.month);
             SetSchedules(s);
 
-            SetManualAssignments(await loadManualAssignments(currentUser!.uid));
+            SetManualAssignments(await loadManualAssignments(currentVSUser!.uid));
 
             sheet.getRows({ limit: sheet.rowCount }).then((data) => {
                 let vs = processRowData(data, u!.matchings);
@@ -159,38 +196,11 @@ export default function Home() {
             });
             fillTable(monthStrings[new Date().getMonth()], 0);
         }
-    }
+    }, [currentVSUser, fillTable, getVSUser, loaded, matchingsDefined, month, sheetLink]);
 
-    const fillTable = (month: string, tab: number) => {
-        SetDays(getSundaysForMonth(month));
-        SetMonth(month);
-        SetTabIndex(3);
-        setTimeout(() => SetTabIndex(tab), 1);
-        let noteVolunteers = volunteers[monthStrings.indexOf(month)]?.filter(v => v.notes);
-        if (noteVolunteers) SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
-    }
-
-    const handleTabChange = (index: number): boolean => {
-        if (index == 1) getVSUser();
-        SetTabIndex(index);
-        return true;
-    }
-
-    // assignment is [month, date, team, name]
-    const handleAddManualAssignment = (assignment: [string, string, string, string, string]) => {
-        let temp = manualAssignments;
-        temp.push(assignment.join());
-        SetManualAssignments(temp);
-        saveManualAssignments(currentUser!.uid, manualAssignments);
-    }
-
-    // assignment is [month, date, team, name]
-    const handleRemoveManualAssignment = (assignment: [string, string, string, string, string]) => {
-        let temp = manualAssignments;
-        temp.splice(temp.indexOf(assignment.join()), 1);
-        SetManualAssignments(temp);
-        saveManualAssignments(currentUser!.uid, manualAssignments);
-    }
+    React.useEffect(() => {
+        if (currentUser) loadSheet();
+    }, [currentUser, loadSheet]);
 
     if (currentUser === undefined || currentUser === null) {
         return (
@@ -203,8 +213,6 @@ export default function Home() {
         );
     }
 
-    loadSheet();
-
     const scheduleVolunteers = async (name: string, day: string, time: string, team: string) => {
         let oldV = volunteers[monthStrings.indexOf(month)].filter(v => v.name == prev);
         if (oldV.length > 0) {
@@ -216,7 +224,7 @@ export default function Home() {
             newV[0].schedule(day, time, team);
             schedules[monthStrings.indexOf(month)]!.scheduleVolunteer(`${team} ${time}`, day, name);
         }
-        await saveSchedule(currentUser.uid, schedules);
+        await saveSchedule(currentVSUser!.uid, schedules);
     }
 
     const exportData = () => {
@@ -406,7 +414,8 @@ export default function Home() {
                     <h4>Settings</h4>
                     <p>
                         Use this page to configure your scheduler. Once defined, these settings should not need to be changed. <br/>
-                        <u>Note:</u> When updating settings, all settings must be defined. The Update button will set the scheduler to work with the options defined at the time you click the button.
+                        <u>Note:</u> When updating settings, all settings must be defined. The Update button will set the scheduler to work with the options defined at the time you click the button. <br/>
+                        <u>First Time Setup:</u> When using this app for the first time, follow these steps: 1) Set Organization Name and  Google Sheet Share Link options. 2) Refresh page. 3) Set Matchings. 4) Refresh Page.
                     </p>
 
                     <h5>Organization</h5>
@@ -414,7 +423,7 @@ export default function Home() {
                         Your organization name.
                     </p>
                     <label htmlFor = "orgName" className = "two columns offset-by-one column">Organization</label>
-                    <input type = "text" id = "orgName" name = "orgName" className = "nine columns" defaultValue = {orgName} onChange = {e => SetOrgName(e.target.value)}/>
+                    <input type = "text" id = "orgName" name = "orgName" className = "eight columns offset-by-one column" defaultValue = {orgName} onChange = {e => SetOrgName(e.target.value)}/>
                     <div className = "big spacer"/>
 
                     <h5>Google Sheet Share Link</h5>
@@ -422,7 +431,7 @@ export default function Home() {
                         The Google Sheet connected to your Google Form. The sheet must be shared to anyone with the link, only viewer permissions are required or recommended.
                     </p>
                     <label htmlFor = "sheetLink" className = "two columns offset-by-one column">Link</label>
-                    <input type = "text" id = "sheetLink" name = "sheetLink" className = "nine columns" defaultValue = {sheetLink} onChange={e => SetSheetLink(e.target.value)}/>
+                    <input type = "text" id = "sheetLink" name = "sheetLink" className = "eight columns offset-by-one column" defaultValue = {sheetLink} onChange={e => SetSheetLink(e.target.value)}/>
                     <div className = "big spacer"/>
 
                     <h5>Field Name Matching</h5>

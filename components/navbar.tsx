@@ -21,7 +21,7 @@ export default function NavBar({ initialUser }: {initialUser: User|null}) {
             if (user?.email != authUser?.email) {
                 router.refresh();
             }
-            if (user) getUserOrgName(user.uid).then(name => SetOrgName(name||"Volunteer Scheduler")).catch(() => {});
+            if (user) getUserOrgName(user.email!).then(name => SetOrgName(name||"Volunteer Scheduler")).catch(() => {});
         });
     }, [user, router]);
 
@@ -32,7 +32,7 @@ export default function NavBar({ initialUser }: {initialUser: User|null}) {
     const handleSignout = (event: any) => {
         event.preventDefault();
         signOut();
-        SetOrgName("Volunteer Scheduler");
+        window.location.reload();
     }
 
     return (

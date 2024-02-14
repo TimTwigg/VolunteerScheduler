@@ -3,6 +3,7 @@ import Volunteer from "@/models/volunteer";
 import { Matchings } from "@/models/user";
 
 function getMonthIndexFromRowData(weekends: string): number {
+    if (!weekends) return -1;
     let month = weekends.match("[0-9]+\/[0-9]+");
     if (month) return new Date(`${month[0]}/24`).getMonth();
     else return -1;
