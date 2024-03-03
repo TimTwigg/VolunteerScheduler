@@ -4,6 +4,7 @@ import React from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
+import { useForm, ValidationError } from "@formspree/react";
 import toast, { Toaster } from "react-hot-toast";
 import "react-tabs/style/react-tabs.css";
 
@@ -43,6 +44,12 @@ export default function Home() {
     const [vNotes, SetVNotes] = React.useState<[string, string][]>([]);
     const [schedules, SetSchedules] = React.useState<Schedule[]>([]);
     const [manualAssignments, SetManualAssignments] = React.useState<string[]>([]);
+    const [state, handleSubmit] = useForm("xvoernqj");
+    const [formValues, SetFormValues] = React.useState({
+        name: "",
+        email: "",
+        details: ""
+    });
 
     const getVSUser = React.useCallback(async () => {
         if (!(currentUser === undefined || currentUser === null)) {
@@ -122,7 +129,7 @@ export default function Home() {
     const fillTable = React.useCallback((month: string, tab: number) => {
         SetDays(getSundaysForMonth(month));
         SetMonth(month);
-        SetTabIndex(3);
+        SetTabIndex(5);
         setTimeout(() => SetTabIndex(tab), 1);
         let noteVolunteers = volunteers[monthStrings.indexOf(month)]?.filter(v => v.notes);
         if (noteVolunteers) SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
@@ -198,6 +205,17 @@ export default function Home() {
         }
     }, [currentVSUser, fillTable, getVSUser, loaded, matchingsDefined, month, sheetLink]);
 
+    const clearForm = () => {
+        if (state.succeeded) {
+            SetFormValues({
+                name: "",
+                email: "",
+                details: ""
+            });
+            toast.success("Message Sent!");
+        }
+    }
+
     React.useEffect(() => {
         if (currentUser) loadSheet();
     }, [currentUser, loadSheet]);
@@ -256,6 +274,7 @@ export default function Home() {
                     <Tab>Schedule</Tab>
                     <Tab>View</Tab>
                     <Tab>Settings</Tab>
+                    <Tab>Help</Tab>
                 </TabList>
                 <TabPanel className = "container">
                     {!matchingsDefined &&
@@ -460,6 +479,30 @@ export default function Home() {
                     <div className = "big spacer"/>
                     <button onClick = {updateSettings} className = "four columns offset-by-eight columns">Update</button>
                     <div className = "big spacer"/>
+                </TabPanel>
+                <TabPanel className = "container">
+                    <h4>Help</h4>
+                    <p>
+                        This Volunteer Scheduler is in beta testing and may contain bugs or issues. If you encounter such an issue (or just
+                        have a question for the developer), please let the developer know as soon as possible using the form below. Include
+                        a description of the issue, and what you were doing when it ocurred.
+                    </p>
+                    <form onSubmit = {handleSubmit} className = "container">
+                        <label htmlFor = "name" className = "three columns">Name<span className = "red">*</span></label>
+                        <input id = "name" type = "text" name = "name" className = "nine columns" placeholder = "Your name" value = {formValues.name} onChange = {e => SetFormValues({...formValues, name: e.target.value})} required/>
+                        <div className = "spacer"/>
+                        
+                        <label htmlFor = "email" className = "three columns nolmargin">Email Address<span className = "red">*</span></label>
+                        <input id = "email" type = "email" name = "email" className = "nine columns" placeholder = "Email address for response" value = {formValues.email} onChange = {e => SetFormValues({...formValues, email: e.target.value})} required/>
+                        <ValidationError prefix = "Email" field = "email" errors = {state.errors}/>
+                        <div className = "spacer"/>
+                        
+                        <textarea id = "message" name = "message" className = "twelve columns" placeholder = "Details" value = {formValues.details} onChange = {e => SetFormValues({...formValues, details: e.target.value})} required/>
+                        <ValidationError prefix = "Message" field = "message" errors = {state.errors}/>
+                        <div className = "spacer"/>
+
+                        <button type = "submit" disabled = {state.submitting} className = "three columns offset-by-eight columns" onClick={clearForm}>Submit</button>
+                    </form>
                 </TabPanel>
             </Tabs>
             <Toaster/>

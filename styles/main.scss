@@ -322,6 +322,20 @@ select {
     box-sizing: border-box;
 }
 
+textarea {
+    padding: 6px 10px;
+    margin: 5px;
+    background-color: white;
+    color: black;
+    font: inherit;
+    border: 1px solid gray;
+    border-radius: 4px;
+    box-shadow: none;
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 30%;
+}
+
 label {
     display: inline-block;
     margin: 5px;
@@ -439,4 +453,12 @@ tbody tr:nth-child(odd) {
     width: 100%;
     overflow: hidden;
     height: 2em;
+}
+
+.nolmargin {
+    margin-left: 0;
+}
+
+.red {
+    color: red;
 }
