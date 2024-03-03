@@ -7,10 +7,10 @@
         "open-browser": "start http://localhost:3000",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint",
-        "deploy": "firebase deploy"
+        "lint": "next lint"
     },
     "dependencies": {
+        "@formspree/react": "^2.5.1",
         "firebase": "^10.7.1",
         "firebase-admin": "^12.0.0",
         "google-auth-library": "^9.4.1",
