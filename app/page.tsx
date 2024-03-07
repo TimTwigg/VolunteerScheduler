@@ -18,11 +18,9 @@ import VolunteerSelect from "@/components/volunteerSelect";
 import { Schedule } from "@/models/schedule";
 import ManualInput from "@/components/manualInput";
 import ViewBar from "@/components/viewBar";
-import VSUser from "@/models/user";
 
 export default function Home() {
     const currentUser = getUser();
-    const [currentVSUser, SetCurrentVSUser] = React.useState<VSUser|null>(null);
     const [tabIndex, SetTabIndex] = React.useState<number>(0);
     const [loaded, SetLoaded] = React.useState<boolean>(false);
     const [orgName, SetOrgName] = React.useState<string>("Volunteer Scheduler");
@@ -58,7 +56,6 @@ export default function Home() {
             
             // set setting options to saved values
             if (u && u.matchings.NameField) {
-                SetCurrentVSUser(u);
                 SetOrgName(u.orgName);
                 SetSheetLink(u.sheetLink);
                 let nameIndex = headers.indexOf(u.matchings.NameField||"");
@@ -104,7 +101,7 @@ export default function Home() {
             TeamsField: teams,
             NotesField: notes
         }
-        if (await updateUserSettings(currentVSUser!.uid, orgNameBox.value, linkBox.value, matchings)) toast.success("Updated Settings!");
+        if (await updateUserSettings(currentUser!.email!, orgNameBox.value, linkBox.value, matchings)) toast.success("Updated Settings!");
         else toast.error("Failed to update settings.")
     }
 
@@ -136,6 +133,7 @@ export default function Home() {
     }, [volunteers]);
 
     const handleTabChange = (index: number): boolean => {
+        console.log(volunteers);
         if (index == 2) getVSUser();
         SetTabIndex(index);
         return true;
@@ -146,7 +144,7 @@ export default function Home() {
         let temp = manualAssignments;
         temp.push(assignment.join());
         SetManualAssignments(temp);
-        saveManualAssignments(currentVSUser!.uid, manualAssignments);
+        saveManualAssignments(currentUser!.email!, manualAssignments);
     }
 
     // assignment is [month, date, team, name]
@@ -154,14 +152,15 @@ export default function Home() {
         let temp = manualAssignments;
         temp.splice(temp.indexOf(assignment.join()), 1);
         SetManualAssignments(temp);
-        saveManualAssignments(currentVSUser!.uid, manualAssignments);
+        saveManualAssignments(currentUser!.email!, manualAssignments);
     }
 
     const loadSheet = React.useCallback(async () => {
         if (loaded && matchingsDefined) return;
         await getVSUser();
-        if (sheetLink && sheetLink != "" && !loaded) {
-            let u = await getUserData(currentVSUser!.uid);
+        if (sheetLink && sheetLink != "" && !loaded && currentUser != null && currentUser != undefined) {
+            let uid = currentUser.email!;
+            let u = await getUserData(uid);
             SetLoaded(true);
             let id = getIDFromLink(sheetLink);
             const doc = new GoogleSpreadsheet(id, new JWT({
@@ -177,7 +176,7 @@ export default function Home() {
             await sheet.loadHeaderRow();
             SetHeaders(sheet.headerValues);
 
-            let s = await loadSchedule(currentVSUser!.uid);
+            let s = await loadSchedule(uid);
             let nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
             if (s.length < 12) {
                 for (let sch of s) {
@@ -185,13 +184,13 @@ export default function Home() {
                 }
                 for (let n of nums) {
                     let m = monthStrings[n];
-                    s.push(new Schedule(["Check-In Team 9am", "Elementary 9am", "Check-In Team 11am", "Elementary 11am", "Rise 11am"], getSundaysForMonth(m), m));
+                    s.push(new Schedule(["Check-In Team 8am", "Elementary 8am", "Check-In Team 9:30am", "Elementary 9:30am", "Check-In Team 11:30am", "Elementary 11:30am", "Rise 11:30am"], getSundaysForMonth(m), m));
                 }
             }
             s.sort((a, b) => a.month - b.month);
             SetSchedules(s);
 
-            SetManualAssignments(await loadManualAssignments(currentVSUser!.uid));
+            SetManualAssignments(await loadManualAssignments(uid));
 
             sheet.getRows({ limit: sheet.rowCount }).then((data) => {
                 let vs = processRowData(data, u!.matchings);
@@ -203,7 +202,7 @@ export default function Home() {
             });
             fillTable(monthStrings[new Date().getMonth()], 0);
         }
-    }, [currentVSUser, fillTable, getVSUser, loaded, matchingsDefined, month, sheetLink]);
+    }, [currentUser, fillTable, getVSUser, loaded, matchingsDefined, month, sheetLink]);
 
     const clearForm = () => {
         if (state.succeeded) {
@@ -225,7 +224,7 @@ export default function Home() {
             <main>
                 <h3>Not Logged In...</h3>
                 <p>
-                    Please log in to use the Volunteer Scheduler.
+                    Please log in with a Google account to use the Volunteer Scheduler.
                 </p>
             </main>
         );
@@ -242,7 +241,7 @@ export default function Home() {
             newV[0].schedule(day, time, team);
             schedules[monthStrings.indexOf(month)]!.scheduleVolunteer(`${team} ${time}`, day, name);
         }
-        await saveSchedule(currentVSUser!.uid, schedules);
+        await saveSchedule(currentUser!.email!, schedules);
     }
 
     const exportData = () => {
@@ -299,66 +298,90 @@ export default function Home() {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colSpan = {days.length+1} className = "breakRow">9:00am</td>
+                                <tr className = "breakRow blue">
+                                    <td colSpan = {days.length+1}>8:00am</td>
                                 </tr>
-                                <tr>
+                                <tr className = "fade pale blue">
                                     <td>Check-In Team</td>
                                     {
                                         days.map((d, i) => <td key = {i}>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "9am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "9am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <ManualInput forceUpdate = {forceUpdate} team = "Check-In Team" day = {d} time = "9am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "8am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "8am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "8am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "8am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Check-In Team" day = {d} time = "8am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
                                         </td>)
                                     }
                                 </tr>
-                                <tr>
+                                <tr className = "fade blue">
                                     <td>Elementary</td>
                                     {
                                         days.map((d, i) => <td key = {i}>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9am" id = {4} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <ManualInput forceUpdate = {forceUpdate} team = "Elementary" day = {d} time = "9am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "8am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "8am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "8am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "8am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "8am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "8am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "8am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "8am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Elementary" day = {d} time = "8am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
                                         </td>)
                                     }
                                 </tr>
-                                <tr>
-                                    <td colSpan = {days.length+1} className = "breakRow">11:00am</td>
+                                <tr className = "breakRow green">
+                                    <td colSpan = {days.length+1}>9:30am</td>
                                 </tr>
-                                <tr>
+                                <tr className = "fade pale green">
                                     <td>Check-In Team</td>
                                     {
                                         days.map((d, i) => <td key = {i}>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "11am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "11am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <ManualInput forceUpdate = {forceUpdate} team = "Check-In Team" day = {d} time = "11am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "9:30am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9:30am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "9:30am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9:30am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Check-In Team" day = {d} time = "9:30am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
                                         </td>)
                                     }
                                 </tr>
-                                <tr>
+                                <tr className = "fade green">
                                     <td>Elementary</td>
                                     {
                                         days.map((d, i) => <td key = {i}>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <ManualInput forceUpdate = {forceUpdate} team = "Elementary" day = {d} time = "11am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9:30am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9:30am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9:30am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "9:30am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "9:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Elementary" day = {d} time = "9:30am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
                                         </td>)
                                     }
                                 </tr>
-                                <tr>
+                                <tr className = "breakRow red">
+                                    <td colSpan = {days.length+1}>11:30am</td>
+                                </tr>
+                                <tr className = "fade pale red">
+                                    <td>Check-In Team</td>
+                                    {
+                                        days.map((d, i) => <td key = {i}>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "11:30am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Check-In Team" day = {d} time = "11:30am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Check-In Team")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Check-In Team" day = {d} time = "11:30am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                        </td>)
+                                    }
+                                </tr>
+                                <tr className = "fade red">
+                                    <td>Elementary</td>
+                                    {
+                                        days.map((d, i) => <td key = {i}>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11:30am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11:30am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11:30am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Elementary" day = {d} time = "11:30am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Elementary")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Elementary" day = {d} time = "11:30am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                        </td>)
+                                    }
+                                </tr>
+                                <tr className = "fade pale red">
                                     <td>Rise</td>
                                     {
                                         days.map((d, i) => <td key = {i}>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
-                                            <ManualInput forceUpdate = {forceUpdate} team = "Rise" day = {d} time = "11am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11:30am" id = {0} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11:30am" id = {1} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11:30am" id = {2} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <VolunteerSelect volunteers = {volunteers} team = "Rise" day = {d} time = "11:30am" id = {3} month = {month} onChange = {(name: string) => scheduleVolunteers(name, d, "11:30am", "Rise")} onFocus = {(name: string) => {SetPrev(name),forceUpdate()}}/>
+                                            <ManualInput forceUpdate = {forceUpdate} team = "Rise" day = {d} time = "11:30am" month = {month} assignments = {manualAssignments} handleAdd = {handleAddManualAssignment} handleRemove = {handleRemoveManualAssignment}/>
                                         </td>)
                                     }
                                 </tr>
@@ -389,40 +412,55 @@ export default function Home() {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colSpan = {days.length+1} className = "breakRow">9:00am</td>
+                                <tr className = "breakRow blue">
+                                    <td colSpan = {days.length+1}>8:00am</td>
                                 </tr>
-                                <tr>
+                                <tr className = "fade pale blue">
                                     <td>Check-In Team</td>
                                     {
-                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Check-In Team 9am")} manualNames = {manualAssignments} team = "Check-In Team" day = {d} time = "9am" month = {month}/></td>)
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Check-In Team 8am")} manualNames = {manualAssignments} team = "Check-In Team" day = {d} time = "8am" month = {month}/></td>)
                                     }
                                 </tr>
-                                <tr>
+                                <tr className = "fade blue">
                                     <td>Elementary</td>
                                     {
-                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Elementary 9am")} manualNames = {manualAssignments} team = "Elementary" day = {d} time = "9am" month = {month}/></td>)
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Elementary 8am")} manualNames = {manualAssignments} team = "Elementary" day = {d} time = "8am" month = {month}/></td>)
                                     }
                                 </tr>
-                                <tr>
-                                    <td colSpan = {days.length+1} className = "breakRow">11:00am</td>
+                                <tr className = "breakRow green">
+                                    <td colSpan = {days.length+1}>9:30am</td>
                                 </tr>
-                                <tr>
+                                <tr className = "fade pale green">
                                     <td>Check-In Team</td>
                                     {
-                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Check-In Team 11am")} manualNames = {manualAssignments} team = "Check-In Team" day = {d} time = "11am" month = {month}/></td>)
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Check-In Team 9:30am")} manualNames = {manualAssignments} team = "Check-In Team" day = {d} time = "9:30am" month = {month}/></td>)
                                     }
                                 </tr>
-                                <tr>
+                                <tr className = "fade green">
                                     <td>Elementary</td>
                                     {
-                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Elementary 11am")} manualNames = {manualAssignments} team = "Elementary" day = {d} time = "11am" month = {month}/></td>)
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Elementary 9:30am")} manualNames = {manualAssignments} team = "Elementary" day = {d} time = "9:30am" month = {month}/></td>)
                                     }
                                 </tr>
-                                <tr>
+                                <tr className = "breakRow red">
+                                    <td colSpan = {days.length+1}>11:30am</td>
+                                </tr>
+                                <tr className = "fade pale red">
+                                    <td>Check-In Team</td>
+                                    {
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Check-In Team 11:30am")} manualNames = {manualAssignments} team = "Check-In Team" day = {d} time = "11:30am" month = {month}/></td>)
+                                    }
+                                </tr>
+                                <tr className = "fade red">
+                                    <td>Elementary</td>
+                                    {
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Elementary 11:30am")} manualNames = {manualAssignments} team = "Elementary" day = {d} time = "11:30am" month = {month}/></td>)
+                                    }
+                                </tr>
+                                <tr className = "fade pale red">
                                     <td>Rise</td>
                                     {
-                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Rise 11am")} manualNames = {manualAssignments} team = "Rise" day = {d} time = "11am" month = {month}/></td>)
+                                        days.map((d, i) => <td key = {i}><ViewBar names = {schedules[monthStrings.indexOf(month)].getNamesForDate(d, "Rise 11:30am")} manualNames = {manualAssignments} team = "Rise" day = {d} time = "11:30am" month = {month}/></td>)
                                     }
                                 </tr>
                             </tbody>
@@ -488,11 +526,11 @@ export default function Home() {
                         a description of the issue, and what you were doing when it ocurred.
                     </p>
                     <form onSubmit = {handleSubmit} className = "container">
-                        <label htmlFor = "name" className = "three columns">Name<span className = "red">*</span></label>
+                        <label htmlFor = "name" className = "three columns">Name<span className = "redText">*</span></label>
                         <input id = "name" type = "text" name = "name" className = "nine columns" placeholder = "Your name" value = {formValues.name} onChange = {e => SetFormValues({...formValues, name: e.target.value})} required/>
                         <div className = "spacer"/>
                         
-                        <label htmlFor = "email" className = "three columns nolmargin">Email Address<span className = "red">*</span></label>
+                        <label htmlFor = "email" className = "three columns nolmargin">Email Address<span className = "redText">*</span></label>
                         <input id = "email" type = "email" name = "email" className = "nine columns" placeholder = "Email address for response" value = {formValues.email} onChange = {e => SetFormValues({...formValues, email: e.target.value})} required/>
                         <ValidationError prefix = "Email" field = "email" errors = {state.errors}/>
                         <div className = "spacer"/>

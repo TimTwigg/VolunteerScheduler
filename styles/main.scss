@@ -56,7 +56,7 @@ $dark-cyan: #119DA4;
 /* For devices larger than 550px */
 @media (min-width: 550px) {
     .container {
-        width: 90%;
+        width: 95%;
     }
     .column,
     .columns {
@@ -413,6 +413,7 @@ table {
     border-collapse: collapse;
     border-spacing: 0;
     border: solid 1px $black;
+    table-layout: fixed;
 }
 
 th,
@@ -422,14 +423,49 @@ td {
     text-align: left;
 }
 
-td.breakRow {
+.breakRow {
     border: 1px solid $black;
-    text-align: center;
-    background-color: #aaaaaa;
+    color: white;
+
+    &.blue {
+        background-color: #1D4E89;
+    }
+
+    &.red {
+        background-color: #8B0000;
+    }
+
+    &.green {
+        background-color: #006400;
+    }
 }
 
-tbody tr:nth-child(odd) {
-    background-color: rgb(231, 231, 231);
+.fade {
+    &.blue {
+        background-color: #C0D6F2;
+    }
+
+    &.red {
+        background-color: #FFB3B3;
+    }
+
+    &.green {
+        background-color: #B3FFB3;
+    }
+
+    &.pale {
+        &.blue {
+            background-color: #EAF1FB;
+        }
+    
+        &.red {
+            background-color: #FFE6E6;
+        }
+    
+        &.green {
+            background-color: #E6FFE6;
+        }
+    }
 }
 
 /* 
@@ -459,6 +495,6 @@ tbody tr:nth-child(odd) {
     margin-left: 0;
 }
 
-.red {
+.redText {
     color: red;
 }
