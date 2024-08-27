@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from "google-spreadsheet";
+import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import { useForm, ValidationError } from "@formspree/react";
 import toast, { Toaster } from "react-hot-toast";
