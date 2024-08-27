@@ -23,7 +23,7 @@ export function processRowData(data: GoogleSpreadsheetRow<Record<string, any>>[]
                 row.get(fieldNames.NameField!),
                 parseInt(row.get(fieldNames.ServeTimesField!)),
                 (row.get(fieldNames.ServiceTimeField!) as string).split(",").map(s => s.trim()),
-                (row.get(fieldNames.WeekendsServingField!) as string).split(",").map((d, _) => new Date(`${d.match("[0-9]+\/[0-9]+")?.[0]!}/24`).toLocaleDateString("en-US", {day: "2-digit", month: "long", year: "numeric"})),
+                (row.get(fieldNames.WeekendsServingField!) as string).split(",").map((d, _) => new Date(`${d.match("[0-9]+\/[0-9]+")?.[0]!}/24`).toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" })),
                 teams,
                 row.get(fieldNames.NotesField!)
             ));
