@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import { GoogleSpreadsheet } from "google-spreadsheet";
+import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import { useForm, ValidationError } from "@formspree/react";
 import toast, { Toaster } from "react-hot-toast";
@@ -115,7 +115,7 @@ export default function Home() {
             let pieces = entry[2].split(" ");
             let team = pieces[0];
             let time = pieces[1];
-            for (const v of vols) {
+            for (let v of vols) {
                 if (v.name == name) {
                     v.schedule(date, time, team);
                 }
@@ -128,12 +128,16 @@ export default function Home() {
         SetMonth(month);
         SetTabIndex(5);
         setTimeout(() => SetTabIndex(tab), 1);
+        if (volunteers.length > 0 && schedules.length > 0) {
+            let index = monthStrings.indexOf(month);
+            mergeScheduleWithVolunteers(volunteers, schedules[index]);
+            SetVolunteers(volunteers);
+        }
         let noteVolunteers = volunteers[monthStrings.indexOf(month)]?.filter(v => v.notes);
         if (noteVolunteers) SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
-    }, [volunteers]);
+    }, [schedules, volunteers]);
 
     const handleTabChange = (index: number): boolean => {
-        console.log(volunteers);
         if (index == 2) getVSUser();
         SetTabIndex(index);
         return true;
@@ -172,9 +176,9 @@ export default function Home() {
                 ]
             }));
             await doc.loadInfo();
-            const sheet = doc.sheetsByIndex[0];
-            await sheet.loadHeaderRow();
-            SetHeaders(sheet.headerValues);
+            const sht = doc.sheetsByIndex[0];
+            await sht.loadHeaderRow();
+            SetHeaders(sht.headerValues);
 
             let s = await loadSchedule(uid);
             let nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -192,15 +196,11 @@ export default function Home() {
 
             SetManualAssignments(await loadManualAssignments(uid));
 
-            sheet.getRows({ limit: sheet.rowCount }).then((data) => {
+            sht.getRows({ limit: sht.rowCount }).then((data) => {
                 let vs = processRowData(data, u!.matchings);
-                let index = monthStrings.indexOf(month);
-                mergeScheduleWithVolunteers(vs, s[index]);
                 SetVolunteers(vs);
-                let noteVolunteers = vs[monthStrings.indexOf(month)].filter(v => v.notes);
-                SetVNotes(noteVolunteers.map(v => [v.name, v.notes!] as [string, string]));
             });
-            fillTable(monthStrings[new Date().getMonth()], 0);
+            fillTable(month, 0);
         }
     }, [currentUser, fillTable, getVSUser, loaded, matchingsDefined, month, sheetLink]);
 
